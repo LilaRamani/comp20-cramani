@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Daydream Believer</title>
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+<h1 id="title">Daydream Believer</h1>
+
+<video src="http://www.cs.tufts.edu/comp/20/daydream_believer.webm" id="music_video" controls></video>
+<div id="lyrics"></div>
+
+<script>
+	document.getElementById("music_video").addEventListener("timeupdate",
+		function () {
+			if (this.currentTime > 6 && this.currentTime < 15) {
+				document.getElementById("lyrics").innerHTML = "Oh I could hide 'neath the wings Of the bluebird as she sings.<img src='bluebird.png'>";
+			} else if (this.currentTime > 15  && this.currentTime < 38) {
+				document.getElementById("lyrics").innerHTML = "The six o'clock alarm would never ring. But it rings and I rise, Wipe the sleep out my eyes. My shavin' razor's cold and it stings<img src='penguin.png'>";
+			} else if (this.currentTime > 38  && this.currentTime < 55) {
+				document.getElementById("lyrics").textContent = "Cheer up, Sleepy Jean. Oh, what can it mean. To a daydream believer, and a homecoming queen.";
+			} else if (this.currentTime > 55  && this.currentTime < 68)	{
+				document.getElementById("lyrics").textContent = "You once thought of me as a white knight on a steed. Now you know how happy I can be.";
+			} else if (this.currentTime > 68  && this.currentTime < 85)	{
+				document.getElementById("lyrics").textContent = "Oh, and our good times start and end Without dollar one to spend. But how much, baby, do we really need.";
+			} else if (this.currentTime > 84  && this.currentTime < 120) {
+				document.getElementById("lyrics").textContent = "Cheer up, Sleepy Jean. Oh, what can it mean. To a daydream believer, and a homecoming queen.";
+			} else if (this.currentTime > 120  && this.currentTime < 127) {
+				document.getElementById("lyrics").textContent = "[Instrumental Interlude]";
+			} else if (this.currentTime > 127  && this.currentTime < 140) {
+				document.getElementById("lyrics").textContent = "Cheer up, Sleepy Jean. Oh, what can it mean. To a daydream believer, and a homecoming queen.";
+			} else if (this.currentTime > 160) {
+				document.getElementById("lyrics").textContent = "FIN";
+			}
+	});
+</script>
+</body>
+</html>	

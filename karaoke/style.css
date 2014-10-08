@@ -1,0 +1,29 @@
+body {
+	background-color: black;
+	width: 75%;
+	font-family: Herculanum;
+}
+
+#music_video {
+	width: 600px;
+	height: 500px;
+	border-width: 3px;
+	border-style: solid;
+	border-color: white;
+	margin: 10px;
+}
+#title {
+	color: white;
+	margin: 10px;
+}
+#lyrics {
+	width: 500px;
+	height: 500px;
+	color: white;
+	font-size: 23px;
+	margin: 15px;
+	position: relative;
+	left: 650px;
+	bottom: 400px;
+}
+
