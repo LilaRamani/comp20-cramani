@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+    <title>Marauder's Map</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=true&amp;libraries=places"></script>
+    <link rel="stylesheet" href="style.css" />
+    
+    <script>
+      var myLat = 0;
+      var myLng = 0;
+      var me = new google.maps.LatLng(myLat, myLng);
+      var mapOptions = {
+            zoom: 13, // The larger the zoom number, the bigger the zoom
+            center: me,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+          };
+      var map;
+      var marker;
+      var infowindow = new google.maps.InfoWindow();
+      var places;
+      
+      function initialize()
+      {
+        map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+        MyLocation();
+      }
+      
+      function MyLocation()
+      {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+              myLat = position.coords.latitude;
+              myLng = position.coords.longitude;
+              renderMap();
+            });
+        }
+        else {
+          alert("Your Browser doesn't support geolocation");
+        }
+      }
+
+      function renderMap()
+      {
+        me = new google.maps.LatLng(myLat, myLng);
+        
+        map.panTo(me);
+  
+        //CREATE MARKER
+        marker = new google.maps.Marker({
+          position: me,
+          title: "TweekTweak",
+          icon: 'pics/icon.png'
+        });
+        marker.setMap(map);
+          
+        // Open info window on click of marker
+          google.maps.event.addListener(marker, 'click', function() {
+          infowindow.setContent(marker.title);
+          infowindow.open(map, marker);
+        });
+      }
+
+      function createMarkerforcharacter(character)
+      {
+        var Latlng;
+        var marker;
+        Latlng = new google.maps.LatLng(character.loc.latitude, character.loc.longitude);
+        var charicon = getIcon(character);
+        marker = new google.maps.Marker({
+          map: map,
+          position: Latlng,
+          title: character.name,
+          icon: charicon
+        });
+        marker.setMap(map);
+        var infoContent = getCharacterInfoContent(character);
+        google.maps.event.addListener(marker, 'click', function() {
+          infowindow.close();
+          infowindow.setContent(infoContent);
+          infowindow.open(map, this);
+        });
+
+      }
+      function getIcon(character) 
+      {
+        if (character.name == "carmen") {
+          return 'pics/carmen.png';
+        } else if (character.name == "nr") {
+          return 'pics/nr.png'
+        } else if (character.name == "batman") {
+          return 'pics/batman.png'
+        } else if (character.name == "hescott") {
+          return 'pics/hescott.png'
+        } else if (character.name == "snape") {
+          return 'pics/snape.png'
+        } else if (character.name == "waldo") {
+          return 'pics/waldo.png'
+        }
+      }
+      function getCharacterInfoContent(character)
+      {
+        str = "Name: " + character.name + "<br>Latitude: " + character.loc.latitude + "<br>Longitude: " + character.loc.longitude + "<br>Note: " + character.loc.note;
+        return str;
+      }
+      function createMarkerforstudent(student)
+      {
+        var marker;
+        var Latlng;
+        Latlng = new google.maps.LatLng(student.lat, student.lng);
+          marker = new google.maps.Marker({
+            position: Latlng,
+            map: map,
+            title: student.login
+            });
+          marker.setMap(map);
+          var infoContent = getStudentInfoContent(student);
+          google.maps.event.addListener(marker, 'click', function() {
+          infowindow.close();
+          infowindow.setContent(infoContent);
+          infowindow.open(map, this);
+        });
+      }
+      function getStudentInfoContent(student)
+      {
+        str = "Login: " + student.login + "<br>Latitude: " + student.lat + "<br>Longitude: " + student.lng + "<br>Timestamp: " + student.created_at;
+        return str;
+      }
+
+      var data;
+      var request = new XMLHttpRequest();
+      request.open("POST", "http://chickenofthesea.herokuapp.com/sendLocation", true);
+      request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      request.onreadystatechange = callbackfunc;
+      request.send("login=TweekTweak&lat=" + myLat + "&lng=" + myLng);  
+
+      function callbackfunc() {
+        if (request.readyState == 4 && request.status == 200) {
+          data = JSON.parse(request.responseText);
+          for (i = 0; i < data.characters.length; i++) { 
+            createMarkerforcharacter(data.characters[i]);
+          }
+          for (i = 0; i < data.students.length; i++) { 
+            createMarkerforstudent(data.students[i]);
+          }
+        }
+      }
+    </script>
+  </head>
+  
+  <body onload="initialize()">
+    <h1 id="title">Marauder's Map of Tufts</h1>
+    <div id="map_canvas"></div>
+    <div id="sidebar"></div>
+  </body>
+</html>
