@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+    <title>Marauder's Map</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=true&amp;libraries=places"></script>
+    <link rel="stylesheet" href="style.css" />
+    
+    <script>
+      var myLat = 0;
+      var myLng = 0;
+      var me = new google.maps.LatLng(myLat, myLng);
+      var mapOptions = {
+            zoom: 13, // The larger the zoom number, the bigger the zoom
+            center: me,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+          };
+      var map;
+      var marker;
+      var infowindow = new google.maps.InfoWindow();
+      var places;
+      
+      function initialize()
+      {
+        map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+        MyLocation();
+      }
+      
+      function MyLocation()
+      {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+              myLat = position.coords.latitude;
+              myLng = position.coords.longitude;
+              renderMap();
+            });
+        }
+        else {
+          alert("Your Browser doesn't support geolocation");
+        }
+      }
+
+      function renderMap()
+      {
+        me = new google.maps.LatLng(myLat, myLng);
+        
+        map.panTo(me);
+  
+        //CREATE MARKER
+        marker = new google.maps.Marker({
+          position: me,
+          title: "Me!"
+        });
+        marker.setMap(map);
+          
+        // Open info window on click of marker
+          google.maps.event.addListener(marker, 'click', function() {
+          infowindow.setContent(marker.title);
+          infowindow.open(map, marker);
+        });
+      }
+
+      function createMarker(place)
+      {
+        var placeLoc = place.geometry.location;
+        var marker = new google.maps.Marker({
+          map: map,
+          position: place.geometry.location
+        });
+
+          google.maps.event.addListener(marker, 'click', function() {
+          infowindow.close();
+          infowindow.setContent(place.name);
+          infowindow.open(map, this);
+        });
+      }
+      //taken from Ming Chow's example of getting food locations
+      //function callback(results, status)
+      //{
+      //  if (status == google.maps.places.PlacesServiceStatus.OK) {
+      //    alert("Got places back!");
+      //    places = results;
+      //    for (var i = 0; i < results.length; i++) {
+      //     createMarker(results[i]);
+      //    }
+      // }
+      //}
+      var data;
+      var request = new XMLHttpRequest();
+      request.open("POST", "http://chickenofthesea.herokuapp.com/sendLocation", true);
+      request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      //request.onreadystatechange = callbackfunc;
+      request.send("login=TweekTweak&lat=" + myLat + "&lng=" + myLng);      
+      data = JSON.parse(request.responseText);
+    </script>
+  </head>
+  
+  <body onload="initialize()">
+    <h1 id="title">Marauder's Map of Tufts</h1>
+    <div id="map_canvas"></div>
+    <div id="sidebar"></div>
+  </body>
+</html>
