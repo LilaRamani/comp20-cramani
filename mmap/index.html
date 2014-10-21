@@ -62,38 +62,73 @@
         });
       }
 
-      function createMarker(place)
+      function createMarkerforcharacter(character)
       {
-        var placeLoc = place.geometry.location;
-        var marker = new google.maps.Marker({
+        var Latlng;
+        var marker;
+        Latlng = new google.maps.LatLng(character.loc.latitude, character.loc.longitude);
+        marker = new google.maps.Marker({
           map: map,
-          position: place.geometry.location
+          position: Latlng,
+          title: character.name
         });
-
-          google.maps.event.addListener(marker, 'click', function() {
+        marker.setMap(map);
+        var infoContent = getCharacterInfoContent(character);
+        google.maps.event.addListener(marker, 'click', function() {
           infowindow.close();
-          infowindow.setContent(place.name);
+          infowindow.setContent(infoContent);
           infowindow.open(map, this);
         });
       }
-      //taken from Ming Chow's example of getting food locations
-      //function callback(results, status)
-      //{
-      //  if (status == google.maps.places.PlacesServiceStatus.OK) {
-      //    alert("Got places back!");
-      //    places = results;
-      //    for (var i = 0; i < results.length; i++) {
-      //     createMarker(results[i]);
-      //    }
-      // }
-      //}
+      function getCharacterInfoContent(character)
+      {
+        str = "Name: " + character.name + "<br>Latitude: " + character.loc.latitude + "<br>Longitude: " + character.loc.longitude + "<br>Note: " + character.loc.note;
+        return str;
+      }
+      function createMarkerforstudent(student)
+      {
+        var marker;
+        var Latlng;
+        Latlng = new google.maps.LatLng(student.lat, student.lng);
+          marker = new google.maps.Marker({
+            position: Latlng,
+            map: map,
+            title: student.login,
+            icon: 'pics/hescott.png'
+
+            });
+          marker.setMap(map);
+          var infoContent = getStudentInfoContent(student);
+          google.maps.event.addListener(marker, 'click', function() {
+          infowindow.close();
+          infowindow.setContent(infoContent);
+          infowindow.open(map, this);
+        });
+      }
+      function getStudentInfoContent(student)
+      {
+        str = "Login: " + student.login + "<br>Latitude: " + student.lat + "<br>Longitude: " + student.lng + "<br>Timestamp: " + student.created_at;
+        return str;
+      }
+
+      MyLocation();
       var data;
       var request = new XMLHttpRequest();
+      //sending my lat and lng as 0
       request.open("POST", "http://chickenofthesea.herokuapp.com/sendLocation", true);
       request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-      //request.onreadystatechange = callbackfunc;
-      request.send("login=TweekTweak&lat=" + myLat + "&lng=" + myLng);      
-      data = JSON.parse(request.responseText);
+      request.onreadystatechange = callbackfunc;
+      request.send("login=TweekTweak&lat=" + myLat + "&lng=" + myLng);  
+
+      function callbackfunc() {
+        data = JSON.parse(request.responseText);
+        for (i = 0; i < data.characters.length; i++) { 
+          createMarkerforcharacter(data.characters[i]);
+        }
+        for (i = 0; i < data.students.length; i++) { 
+          createMarkerforstudent(data.students[i]);
+        }
+      }
     </script>
   </head>
   
