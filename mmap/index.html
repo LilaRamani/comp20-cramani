@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="style.css" />
     
     <script>
+      var request;
+      var data;
       var myLat = 0;
       var myLng = 0;
       var me = new google.maps.LatLng(myLat, myLng);
@@ -20,7 +22,6 @@
       var map;
       var marker;
       var infowindow = new google.maps.InfoWindow();
-      var places;
       
       function initialize()
       {
@@ -51,7 +52,7 @@
         //CREATE MARKER
         marker = new google.maps.Marker({
           position: me,
-          title: "TweekTweak",
+          title: "me",
           icon: 'pics/icon.png'
         });
         marker.setMap(map);
@@ -61,6 +62,11 @@
           infowindow.setContent(marker.title);
           infowindow.open(map, marker);
         });
+        request = new XMLHttpRequest();
+        request.open("POST", "http://chickenofthesea.herokuapp.com/sendLocation", true);
+        request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        request.onreadystatechange = callbackfunc;
+        request.send("login=TweekTweak&lat=" + me.lat() + "&lng=" + me.lng()); 
       }
 
       function createMarkerforcharacter(character)
@@ -105,6 +111,31 @@
         str = "Name: " + character.name + "<br>Latitude: " + character.loc.latitude + "<br>Longitude: " + character.loc.longitude + "<br>Note: " + character.loc.note;
         return str;
       }
+      function drawPolylines(character)
+      {
+        Number.prototype.toRad = function() {
+          return this * Math.PI / 180;
+        }
+
+        var lat2 = character.loc.latitude; 
+        var lon2 = character.loc.longitude; 
+        var lat1 =  me.lat(); 
+        var lon1 = me.lng(); 
+
+        var R = 6371; 
+        var x1 = lat2-lat1;
+        var dLat = x1.toRad();  
+        var x2 = lon2-lon1;
+        var dLon = x2.toRad();  
+        var a = Math.sin(dLat/2) * Math.sin(dLat/2) + 
+                Math.cos(lat1.toRad()) * Math.cos(lat2.toRad()) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);  
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+        var d = R * c; 
+        var inmiles = d * 0.62137;
+        document.getElementById("distance_list").innerHTML += "<li>" + character.name + ": " + inmiles + " miles away</li>"
+      }
+
       function createMarkerforstudent(student)
       {
         var marker;
@@ -123,24 +154,19 @@
           infowindow.open(map, this);
         });
       }
+
       function getStudentInfoContent(student)
       {
         str = "Login: " + student.login + "<br>Latitude: " + student.lat + "<br>Longitude: " + student.lng + "<br>Timestamp: " + student.created_at;
         return str;
       }
 
-      var data;
-      var request = new XMLHttpRequest();
-      request.open("POST", "http://chickenofthesea.herokuapp.com/sendLocation", true);
-      request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-      request.onreadystatechange = callbackfunc;
-      request.send("login=TweekTweak&lat=" + myLat + "&lng=" + myLng);  
-
       function callbackfunc() {
         if (request.readyState == 4 && request.status == 200) {
           data = JSON.parse(request.responseText);
           for (i = 0; i < data.characters.length; i++) { 
             createMarkerforcharacter(data.characters[i]);
+            drawPolylines(data.characters[i]);
           }
           for (i = 0; i < data.students.length; i++) { 
             createMarkerforstudent(data.students[i]);
@@ -153,6 +179,10 @@
   <body onload="initialize()">
     <h1 id="title">Marauder's Map of Tufts</h1>
     <div id="map_canvas"></div>
-    <div id="sidebar"></div>
+    <div id="sidebar">
+      <p id="distances">Distances:</p>
+      <ul id="distance_list">
+      </ul>
+    </div>
   </body>
 </html>
