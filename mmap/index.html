@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="style.css" />
     
     <script>
+      var request;
+      var data;
       var myLat = 0;
       var myLng = 0;
       var me = new google.maps.LatLng(myLat, myLng);
@@ -20,14 +22,13 @@
       var map;
       var marker;
       var infowindow = new google.maps.InfoWindow();
-      var places;
-      
+
       function initialize()
       {
         map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
         MyLocation();
       }
-      
+      //get my location using navigator.geolocation
       function MyLocation()
       {
         if (navigator.geolocation) {
@@ -41,7 +42,7 @@
           alert("Your Browser doesn't support geolocation");
         }
       }
-
+      //set up map
       function renderMap()
       {
         me = new google.maps.LatLng(myLat, myLng);
@@ -51,7 +52,7 @@
         //CREATE MARKER
         marker = new google.maps.Marker({
           position: me,
-          title: "TweekTweak",
+          title: "me",
           icon: 'pics/icon.png'
         });
         marker.setMap(map);
@@ -61,8 +62,13 @@
           infowindow.setContent(marker.title);
           infowindow.open(map, marker);
         });
+        request = new XMLHttpRequest();
+        request.open("POST", "http://chickenofthesea.herokuapp.com/sendLocation", true);
+        request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        request.onreadystatechange = callbackfunc;
+        request.send("login=TweekTweak&lat=" + me.lat() + "&lng=" + me.lng()); 
       }
-
+      //Create marker for character
       function createMarkerforcharacter(character)
       {
         var Latlng;
@@ -84,6 +90,7 @@
         });
 
       }
+      //Get specific icon
       function getIcon(character) 
       {
         if (character.name == "carmen") {
@@ -100,11 +107,66 @@
           return 'pics/waldo.png'
         }
       }
+      //Format info for marker Info window
       function getCharacterInfoContent(character)
       {
         str = "Name: " + character.name + "<br>Latitude: " + character.loc.latitude + "<br>Longitude: " + character.loc.longitude + "<br>Note: " + character.loc.note;
         return str;
       }
+      //adapted from http://stackoverflow.com/questions/14560999/using-the-haversine-formula-in-javascript
+      function getDistance(character)
+      {
+        Number.prototype.toRad = function() {
+          return this * Math.PI / 180;
+        }
+
+        var lat2 = character.loc.latitude; 
+        var lon2 = character.loc.longitude; 
+        var lat1 =  me.lat(); 
+        var lon1 = me.lng(); 
+
+        var R = 6371; 
+        var x1 = lat2-lat1;
+        var dLat = x1.toRad();  
+        var x2 = lon2-lon1;
+        var dLon = x2.toRad();  
+        var a = Math.sin(dLat/2) * Math.sin(dLat/2) + 
+                Math.cos(lat1.toRad()) * Math.cos(lat2.toRad()) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);  
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+        var d = R * c; 
+        var inmiles = d * 0.62137;
+        return inmiles;
+      }
+      //adapted from http://stackoverflow.com/questions/1069666/sorting-javascript-object-by-property-value
+      function displayDistances(dict)
+      {
+        var sortable = [];
+        for (var key in dict) {
+          sortable.push([key, dict[key]])
+          sortable.sort(function(a, b) {return a[1] - b[1]})
+        }
+        for (var i = 0; i <sortable.length; i++) {
+          document.getElementById("distance_list").innerHTML += "<li>" + sortable[i][0] + ": " + sortable[i][1] + " miles away</li>";
+        }
+      }
+      //create polyline between me and given character
+      function drawPolylines(character)
+      {
+        var coordinates = [
+          new google.maps.LatLng(character.loc.latitude, character.loc.longitude),
+          me
+        ]; 
+        var polyline = new google.maps.Polyline({
+          path: coordinates,
+          geodesic: true,
+          strokeColor: '#FF0000',
+          strokeOpacity: 1.0,
+          strokeWeight: 2
+        });
+        polyline.setMap(map);
+      }
+      //create marker for given student
       function createMarkerforstudent(student)
       {
         var marker;
@@ -123,25 +185,25 @@
           infowindow.open(map, this);
         });
       }
+      //format student info window
       function getStudentInfoContent(student)
       {
         str = "Login: " + student.login + "<br>Latitude: " + student.lat + "<br>Longitude: " + student.lng + "<br>Timestamp: " + student.created_at;
         return str;
       }
-
-      var data;
-      var request = new XMLHttpRequest();
-      request.open("POST", "http://chickenofthesea.herokuapp.com/sendLocation", true);
-      request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-      request.onreadystatechange = callbackfunc;
-      request.send("login=TweekTweak&lat=" + myLat + "&lng=" + myLng);  
-
-      function callbackfunc() {
+      //MY CALLBACK FUNCTION
+      function callbackfunc() 
+      {
+        var distances = new Object();
         if (request.readyState == 4 && request.status == 200) {
           data = JSON.parse(request.responseText);
           for (i = 0; i < data.characters.length; i++) { 
             createMarkerforcharacter(data.characters[i]);
+            d = getDistance(data.characters[i]);
+            distances[data.characters[i].name] = d;
+            drawPolylines(data.characters[i]);
           }
+          displayDistances(distances);
           for (i = 0; i < data.students.length; i++) { 
             createMarkerforstudent(data.students[i]);
           }
@@ -153,6 +215,10 @@
   <body onload="initialize()">
     <h1 id="title">Marauder's Map of Tufts</h1>
     <div id="map_canvas"></div>
-    <div id="sidebar"></div>
+    <div id="sidebar">
+      <p id="distances">Distances:</p>
+      <ul id="distance_list">
+      </ul>
+    </div>
   </body>
 </html>
