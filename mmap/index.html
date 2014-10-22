@@ -22,13 +22,13 @@
       var map;
       var marker;
       var infowindow = new google.maps.InfoWindow();
-      
+
       function initialize()
       {
         map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
         MyLocation();
       }
-      
+      //get my location using navigator.geolocation
       function MyLocation()
       {
         if (navigator.geolocation) {
@@ -42,7 +42,7 @@
           alert("Your Browser doesn't support geolocation");
         }
       }
-
+      //set up map
       function renderMap()
       {
         me = new google.maps.LatLng(myLat, myLng);
@@ -68,7 +68,7 @@
         request.onreadystatechange = callbackfunc;
         request.send("login=TweekTweak&lat=" + me.lat() + "&lng=" + me.lng()); 
       }
-
+      //Create marker for character
       function createMarkerforcharacter(character)
       {
         var Latlng;
@@ -90,6 +90,7 @@
         });
 
       }
+      //Get specific icon
       function getIcon(character) 
       {
         if (character.name == "carmen") {
@@ -106,12 +107,14 @@
           return 'pics/waldo.png'
         }
       }
+      //Format info for marker Info window
       function getCharacterInfoContent(character)
       {
         str = "Name: " + character.name + "<br>Latitude: " + character.loc.latitude + "<br>Longitude: " + character.loc.longitude + "<br>Note: " + character.loc.note;
         return str;
       }
-      function displayDistances(character)
+      //adapted from http://stackoverflow.com/questions/14560999/using-the-haversine-formula-in-javascript
+      function getDistance(character)
       {
         Number.prototype.toRad = function() {
           return this * Math.PI / 180;
@@ -133,9 +136,21 @@
         var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
         var d = R * c; 
         var inmiles = d * 0.62137;
-        document.getElementById("distance_list").innerHTML += "<li>" + character.name + ": " + inmiles + " miles away</li>"
+        return inmiles;
       }
-
+      //adapted from http://stackoverflow.com/questions/1069666/sorting-javascript-object-by-property-value
+      function displayDistances(dict)
+      {
+        var sortable = [];
+        for (var key in dict) {
+          sortable.push([key, dict[key]])
+          sortable.sort(function(a, b) {return a[1] - b[1]})
+        }
+        for (var i = 0; i <sortable.length; i++) {
+          document.getElementById("distance_list").innerHTML += "<li>" + sortable[i][0] + ": " + sortable[i][1] + " miles away</li>";
+        }
+      }
+      //create polyline between me and given character
       function drawPolylines(character)
       {
         var coordinates = [
@@ -151,7 +166,7 @@
         });
         polyline.setMap(map);
       }
-
+      //create marker for given student
       function createMarkerforstudent(student)
       {
         var marker;
@@ -170,21 +185,25 @@
           infowindow.open(map, this);
         });
       }
-
+      //format student info window
       function getStudentInfoContent(student)
       {
         str = "Login: " + student.login + "<br>Latitude: " + student.lat + "<br>Longitude: " + student.lng + "<br>Timestamp: " + student.created_at;
         return str;
       }
       //MY CALLBACK FUNCTION
-      function callbackfunc() {
+      function callbackfunc() 
+      {
+        var distances = new Object();
         if (request.readyState == 4 && request.status == 200) {
           data = JSON.parse(request.responseText);
           for (i = 0; i < data.characters.length; i++) { 
             createMarkerforcharacter(data.characters[i]);
-            displayDistances(data.characters[i]);
+            d = getDistance(data.characters[i]);
+            distances[data.characters[i].name] = d;
             drawPolylines(data.characters[i]);
           }
+          displayDistances(distances);
           for (i = 0; i < data.students.length; i++) { 
             createMarkerforstudent(data.students[i]);
           }
