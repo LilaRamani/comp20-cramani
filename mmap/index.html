@@ -111,7 +111,7 @@
         str = "Name: " + character.name + "<br>Latitude: " + character.loc.latitude + "<br>Longitude: " + character.loc.longitude + "<br>Note: " + character.loc.note;
         return str;
       }
-      function drawPolylines(character)
+      function displayDistances(character)
       {
         Number.prototype.toRad = function() {
           return this * Math.PI / 180;
@@ -134,6 +134,22 @@
         var d = R * c; 
         var inmiles = d * 0.62137;
         document.getElementById("distance_list").innerHTML += "<li>" + character.name + ": " + inmiles + " miles away</li>"
+      }
+
+      function drawPolylines(character)
+      {
+        var coordinates = [
+          new google.maps.LatLng(character.loc.latitude, character.loc.longitude),
+          me
+        ]; 
+        var polyline = new google.maps.Polyline({
+          path: coordinates,
+          geodesic: true,
+          strokeColor: '#FF0000',
+          strokeOpacity: 1.0,
+          strokeWeight: 2
+        });
+        polyline.setMap(map);
       }
 
       function createMarkerforstudent(student)
@@ -160,12 +176,13 @@
         str = "Login: " + student.login + "<br>Latitude: " + student.lat + "<br>Longitude: " + student.lng + "<br>Timestamp: " + student.created_at;
         return str;
       }
-
+      //MY CALLBACK FUNCTION
       function callbackfunc() {
         if (request.readyState == 4 && request.status == 200) {
           data = JSON.parse(request.responseText);
           for (i = 0; i < data.characters.length; i++) { 
             createMarkerforcharacter(data.characters[i]);
+            displayDistances(data.characters[i]);
             drawPolylines(data.characters[i]);
           }
           for (i = 0; i < data.students.length; i++) { 
